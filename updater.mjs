@@ -6,10 +6,10 @@ const currentCommit = ".\\currentCommit.json"
 if (allCommits.indexOf(currentCommit[0]) != 0) {
     var commitsSince = allCommits.indexOf(currentCommit[0])
     if (commitsSince == 1) {
-        console.log(`Updating yourbotname, there has been ${commitsSince} commit since yourbotname was last updated`)
+        console.log(`Updating, there has been ${commitsSince} commit since last update`)
     }
     if (commitsSince != 1) {
-        console.log(`Updating yourbotname, there has been ${commitsSince} commits since yourbotname was last updated`)
+        console.log(`Updating, there has been ${commitsSince} commits since last update`)
     }
     await updateSalmon()
     await updateCommits()
