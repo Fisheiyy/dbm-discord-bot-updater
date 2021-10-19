@@ -1,0 +1,11 @@
+{
+  "main": "updater.js",
+  "name": "dbm-discord-bot-updater",
+  "description": "updates dbm bots via github.",
+  "version": "1.0.0",
+  "author": "fisheiyy",
+  "dependencies": {
+    "fs-extra": "^10.0.0",
+    "node-fetch": "^3.0.0"
+  }
+}
