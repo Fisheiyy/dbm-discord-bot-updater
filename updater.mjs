@@ -3,19 +3,19 @@ import fetch from 'node-fetch'
 const allCommits = ".\\commits.json"
 const currentCommit = ".\\currentCommit.json"
 
-if (allCommits.indexOf(currentCommit[0]) != 0) {
-    var commitsSince = allCommits.indexOf(currentCommit[0])
+if (allCommits.indexOf(currentCommit.sha) > 1) {
+    var commitsSince = allCommits.indexOf(currentCommit.sha)
     if (commitsSince == 1) {
         console.log(`Updating, there has been ${commitsSince} commit since last update`)
     }
     if (commitsSince != 1) {
         console.log(`Updating, there has been ${commitsSince} commits since last update`)
     }
-    await updateSalmon()
+    await updateBot()
     await updateCommits()
 }
 
-async function updateSalmon() {
+async function updateBot() {
     console.log("Updating Commands")
     var commands = await fetch('your commands.json raw github url')
     var commandsText = await commands.text()
@@ -38,13 +38,14 @@ async function updateCommits() {
     // var commits = await fetch('your bot repo url', {"method": "GET", "headers": headers})
     // if your repo is public you can comment the line below and uncomment the 2 lines above
     var commits = await fetch('your bot repo url')
-    var commitsText = await commits.text()
+    var commitsJSON = await commits.json()
+    var commitsJSON = JSON.stringify(commitsJSON)
     console.log("Updating All Commits")
-    fs.writeFile(allCommits, commitsText, (err) => {
+    fs.writeFile(allCommits, commitsJSON, (err) => {
         if (err) {return console.log(err)}
     })
     console.log("Updating Current Commit")
-    fs.writeFile(currentCommit, commitsText[0], (err) => {
+    fs.writeFile(currentCommit, commitsJSON[0], (err) => {
         if (err) {return console.log(err)}
     })
 }
