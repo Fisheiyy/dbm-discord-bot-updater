@@ -19,14 +19,14 @@ async function updateSalmon() {
     console.log("Updating Commands")
     var commands = await fetch('your commands.json raw github url')
     var commandsText = await commands.text()
-    fs.writeFile('salmon/data/commands.json', commandsText, (err) => {
+    fs.writeFile('.\\data\\commands.json', commandsText, (err) => {
         if (err) {return console.log(err)}
     })
 	console.log("Commands Updated")
     console.log("Updating Events")
     var events = await fetch('your events.json raw github url')
     var eventsText = await events.text()
-    fs.writeFile('salmon/data/events.json', eventsText, (err) => {
+    fs.writeFile('.\\data\\events.json', eventsText, (err) => {
         if (err) {return console.log(err)}
     })
 	console.log("Events Updated")
