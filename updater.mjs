@@ -1,6 +1,6 @@
 import fs from 'fs-extra'
 import fetch from 'node-fetch'
-const config = JSON.parse(fs.readFileSync('.\\updaterConfig.json', 'utf-8'))
+const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
 
 async function updateBot() {
     if (config.PRIVATE_REPO == "y") {
