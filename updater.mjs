@@ -3,8 +3,8 @@ import fetch from 'node-fetch'
 const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
 
 async function updateBot() {
-    if (config.PRIVATE_REPO == "y") {
-        var headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}`}
+    if (config.PRIVATE_REPO && typeof config.PRIVATE_REPO === 'boolean') {
+        var headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}` }
         console.log("Updating Commands")
         var commands = await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`, {"method": "GET", "headers": headers})
         var commandsText = await commands.text()
