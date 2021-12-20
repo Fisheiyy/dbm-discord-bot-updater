@@ -1,6 +1,6 @@
 {
-  "GITHUB_AUTH_TOKEN": "",
   "GITHUB_USERNAME": "",
   "GITHUB_REPO_NAME": "",
-  "PRIVATE_REPO": ""
+  "PRIVATE_REPO": false,
+  "GITHUB_AUTH_TOKEN": ""
 }
