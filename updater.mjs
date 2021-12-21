@@ -49,6 +49,7 @@ async function updateSettings() {
 (async function start() {
     await configValidator()
     if (process.argv[2] == undefined) {
+        console.log("No argument provided, updating commands by default")
         await updateCommands()
     }
     else {
