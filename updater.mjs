@@ -1,6 +1,5 @@
-import fs from 'fs-extra'/
+import fs from 'fs-extra'
 import fetch from 'node-fetch'
-import { argv } from 'process'
 const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
 const headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}`}
 
