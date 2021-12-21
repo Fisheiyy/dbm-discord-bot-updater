@@ -1,6 +1,8 @@
-import fs from 'fs-extra'
+import fs from 'fs-extra'/
 import fetch from 'node-fetch'
+import { argv } from 'process'
 const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
+const headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}`}
 
 async function configValidator() {
     if (config.GITHUB_USERNAME !== "") {
@@ -20,8 +22,7 @@ async function configValidator() {
     console.log("Config Valid and Github Reponse OK")
 }
 
-async function updateBot() {
-    const headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}`}
+async function updateCommands() {
     console.log("Updating Commands")
     const commands = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
     const commandsText = await commands.text()
@@ -34,7 +35,36 @@ async function updateBot() {
     console.log("Events Updated")
 }
 
+async function updateSettings() {
+    console.log("Updating Settings")
+    const settings = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
+    const settingsText = await settings.text()
+    fs.writeFileSync('.\\data\\settings.json', settingsText)
+    console.log("Settings Updated")
+}
+
+// async function updateResources() {}
+
+// async function updateActions() {}
+
 (async function start() {
     await configValidator()
-    await updateBot()
+    if (process.argv[2] == undefined) {
+        await updateCommands()
+    }
+    else {
+        switch (process.argv[2]) {
+            case "settings":
+                await updateSettings()
+                break
+            // case "resources":
+            //     await updateResources()
+            //     break
+            // case "actions":
+            //     await updateActions()
+            //     break
+            default:
+                throw new Error("Invalid Argument")
+        }
+    }
 }())
