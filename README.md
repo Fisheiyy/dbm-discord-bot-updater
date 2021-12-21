@@ -2,7 +2,7 @@
 dbm-discord-bot-updater requires Node 16 per DBM v2 and it is recommended to use the [latest version of Node](https://nodejs.org/en/)
 
 This script will update your discord bots commands.json and events.json, included is "rawdata.txt" it has the compressed data
-for an event and command that will automatically update your bot at 00:00 CDT or whenever the command is called by the BOT OWNER
+for an event and command that will automatically update your bot everyday at 00:00 CDT or whenever the command is called by the BOT OWNER
 
 # Installation
 To Install this you must copy updater.mjs and updaterConfig.json to your bots directory, But you must also edit the config.
