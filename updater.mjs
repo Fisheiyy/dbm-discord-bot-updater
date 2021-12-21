@@ -8,7 +8,7 @@ async function configValidator() {
         if (config.GITHUB_REPO_NAME !== "") {
             if (typeof config.PRIVATE_REPO == 'boolean') {
                 if (config.PRIVATE_REPO == true && config.GITHUB_AUTH_TOKEN == "") {throw new Error("GITHUB_AUTH_TOKEN is not set in updaterConfig.json")}
-                else {console.log("Private Repo = False")}
+                if (config.PRIVATE_REPO == false) {console.log("Private Repo = False")}
             }
             else {throw new Error("PRIVATE_REPO is not a valid boolean in updaterConfig.json")}
         }
