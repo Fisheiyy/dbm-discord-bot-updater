@@ -15,10 +15,16 @@ async function configValidator() {
         else {throw new Error("GITHUB_REPO_NAME is not set in updaterConfig.json")}
     }
     else {throw new Error("GITHUB_USERNAME is not set in updaterConfig.json")}
+    console.log("Config Valid")
     const githubApi = await fetch(`https://api.github.com/`)
     const githubCom = await fetch(`https://github.com/`)
     if (githubApi.status && githubCom.status != 200) {throw new Error("Github is having issues, try again later")}
-    console.log("Config Valid and Github Response OK")
+    console.log("Github Response OK")
+    if (config.GITHUB_AUTH_TOKEN !== "") {
+        const checkAuthToken = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents`, {"method": "GET", "headers": headers})
+        if (checkAuthToken.status !== 200) {throw new Error("GITHUB_AUTH_TOKEN is not valid")}
+    }
+    console.log("Github Auth Token Valid")
 }
 
 async function updateCommands() {
