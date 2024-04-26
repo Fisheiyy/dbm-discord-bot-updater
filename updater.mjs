@@ -1,14 +1,17 @@
-import fs from 'fs-extra'
-import fetch from 'node-fetch'
+import fs from 'fs'
+import { exit } from 'process';
+import readline from 'readline'
+const prompt = readline.createInterface(process.stdin, process.stdout);
 const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
-const headers = {"Authorization": `Token ${config.GITHUB_AUTH_TOKEN}`}
+const headers = {"Authorization": `Token ${config.GITHUB_ACCESS_TOKEN}`}
 
+// config validation
 async function configValidator() {
     if (config.GITHUB_USERNAME !== "") {
         if (config.GITHUB_REPO_NAME !== "") {
             if (typeof config.PRIVATE_REPO == 'boolean') {
-                if (config.PRIVATE_REPO == true && config.GITHUB_AUTH_TOKEN == "") {throw new Error("GITHUB_AUTH_TOKEN is not set in updaterConfig.json")}
-                if (config.PRIVATE_REPO == false) {console.log("Private Repo = False")}
+                if (config.PRIVATE_REPO == true && config.GITHUB_ACCESS_TOKEN == "") {throw new Error("GITHUB_ACCESS_TOKEN is not set in updaterConfig.json")}
+                config.PRIVATE_REPO == false ? console.log("Public Repo") : console.log("Private Repo")
             }
             else {throw new Error("PRIVATE_REPO is not a valid boolean in updaterConfig.json")}
         }
@@ -19,14 +22,14 @@ async function configValidator() {
     const githubApi = await fetch(`https://api.github.com/`)
     const githubCom = await fetch(`https://github.com/`)
     if (githubApi.status && githubCom.status != 200) {throw new Error("Github is having issues, try again later")}
-    console.log("Github Response OK")
-    if (config.GITHUB_AUTH_TOKEN !== "") {
+    console.log("Github API OK")
+    if (config.GITHUB_ACCESS_TOKEN !== "") {
         const checkAuthToken = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents`, {"method": "GET", "headers": headers})
-        if (checkAuthToken.status !== 200) {throw new Error("GITHUB_AUTH_TOKEN is not valid")}
+        checkAuthToken.status == 200 ? console.log("Github Auth Token Valid") : (() => { throw new Error("GITHUB_ACCESS_TOKEN is not valid") })()
     }
-    console.log("Github Auth Token Valid")
 }
 
+// main functions
 async function updateCommands() {
     const commands = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
     const commandsText = await commands.text()
@@ -36,13 +39,15 @@ async function updateCommands() {
     const eventsText = await events.text()
     fs.writeFileSync('.\\data\\events.json', eventsText)
     console.log("Events Updated")
+    exit()
 }
 
 async function updateSettings() {
-    const settings = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
+    const settings = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`)
     const settingsText = await settings.text()
     fs.writeFileSync('.\\data\\settings.json', settingsText)
     console.log("Settings Updated")
+    exit()
 }
 
 async function updateResources() {
@@ -56,6 +61,7 @@ async function updateResources() {
         console.log("Resources Downloaded: " + resourcesJSON[i].name)
         i++
     }
+    exit()
 }
 
 async function updateActions() {
@@ -93,29 +99,57 @@ async function updateActions() {
         i++
     }
     console.log("Extensions Updated")
+    exit()
 }
 
+async function choices(choice) {
+    choice = choice.toLowerCase()
+    switch (choice) {
+        case "all":
+            console.log("Updating Everything, this may take a while")
+            await updateCommands()
+            await updateSettings()
+            await updateResources()
+            await updateActions()
+            break
+        case "settings":
+            console.log("Updating Settings, this may take a while")
+            await updateSettings()
+            break
+        case "actions":
+            console.log("Updating Actions, this may take a while")
+            await updateActions()
+            break
+        case "commands":
+            console.log("Updating Commands, this may take a while")
+            await updateCommands()
+            break
+        case "resources":
+            console.log("Updating Resources, this may take a while")
+            await updateResources()
+            break
+        default:
+            throw new Error("Invalid Argument")
+    }
+}
+
+// start
 (async function start() {
     await configValidator()
     if (process.argv[2] == undefined) {
-        console.log("No argument provided, updating commands by default")
-        await updateCommands()
+        console.log("No argument(s) provided, entering Manual Mode by default")
+        let timeoutId = setTimeout(() => {
+            console.log('No input received, updating commands by default...');
+            choices("commands") 
+        }, 10000)
+        prompt.question("What do you want to update? \n  All \n  Settings \n  Actions \n  Commands \n  Resources \nYou have 10 Seconds to answer \n  ", (choice) => {
+            clearTimeout(timeoutId)
+            if (choice !== undefined) {
+                manual(choice)
+            }
+        })
     }
     else {
-        switch (process.argv[2]) {
-            case "settings":
-                await updateSettings()
-                break
-            case "resources":
-                console.log("Updating Resources, this may take a while")
-                await updateResources()
-                break
-            case "actions":
-                console.log("Updating Actions, this may take a while")
-                await updateActions()
-                break
-            default:
-                throw new Error("Invalid Argument")
-        }
+        await choices(process.argv[2])
     }
 }())

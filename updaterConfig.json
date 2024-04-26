@@ -2,5 +2,5 @@
   "GITHUB_USERNAME": "",
   "GITHUB_REPO_NAME": "",
   "PRIVATE_REPO": false,
-  "GITHUB_AUTH_TOKEN": ""
+  "GITHUB_ACCESS_TOKEN": ""
 }
