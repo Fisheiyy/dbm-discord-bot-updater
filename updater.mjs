@@ -18,41 +18,59 @@ async function configValidator() {
         else {throw new Error("GITHUB_REPO_NAME is not set in updaterConfig.json")}
     }
     else {throw new Error("GITHUB_USERNAME is not set in updaterConfig.json")}
-    console.log("Config Valid")
-    const githubAPI = await fetch(`https://api.github.com/`)
-    const githubCOM = await fetch(`https://github.com/`)
+    var githubAPI = await fetch(`https://api.github.com/`)
+    var githubCOM = await fetch(`https://github.com/`)
     if (githubAPI.status && githubCOM.status != 200) {throw new Error("Github is having issues, try again later")}
     console.log("Github API OK")
     if (config.GITHUB_ACCESS_TOKEN !== "") {
-        const checkAuthToken = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents`, {"method": "GET", "headers": headers})
-        checkAuthToken.status == 200 ? console.log("Github Auth Token Valid") : (() => { throw new Error("GITHUB_ACCESS_TOKEN is not valid") })()
+        var checkAuthToken = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents`, {"method": "GET", "headers": headers})
+        checkAuthToken.status == 200 ? console.log("Github Access Token Valid") : (() => { throw new Error("GITHUB_ACCESS_TOKEN is not valid") })()
     }
+    var checkRepo = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}`, {"method": "GET"})
+    if (checkRepo.status != 200) {throw new Error("Repo does not exist, is private, or incorrect username/repo name defined in updaterConfig.json")}
+    else {console.log("Repo Valid")}
+    console.log("Config Valid")
+}
+
+// repo contents validator
+async function repoContentsValidator() {
+    var actions = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`, {"method": "GET"})
+    var events = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`, {"method": "GET"})
+    var extensions = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`, {"method": "GET"})
+    var resources = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`, {"method": "GET"})
+    var commands = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/commands.json`, {"method": "GET"})
+    var settings = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/settings.json`, {"method": "GET"})
+    var all = [actions, events, extensions, resources, commands, settings]
+    for (var i = 0; i < all.length; i++) {
+        if (all[i].status == 404) {throw new Error("Repo directories are not valid")}
+    }
+    console.log("Repo Contents Valid")
 }
 
 // main functions
 async function updateCommands() {
-    const commands = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
-    const commandsText = await commands.text()
+    var commands = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/commands.json`)
+    var commandsText = await commands.text()
     fs.writeFileSync('.\\data\\commands.json', commandsText)
     console.log("Commands Updated")
-    const events = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/events.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/events.json`)
-    const eventsText = await events.text()
+    var events = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/events.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/events.json`)
+    var eventsText = await events.text()
     fs.writeFileSync('.\\data\\events.json', eventsText)
     console.log("Events Updated")
     exit()
 }
 
 async function updateSettings() {
-    const settings = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`)
-    const settingsText = await settings.text()
+    var settings = config.PRIVATE_REPO ? await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://raw.githubusercontent.com/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/main/data/settings.json`)
+    var settingsText = await settings.text()
     fs.writeFileSync('.\\data\\settings.json', settingsText)
     console.log("Settings Updated")
     exit()
 }
 
 async function updateResources() {
-    const resources = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`)
-    const resourcesJSON = await resources.json()
+    var resources = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`)
+    var resourcesJSON = await resources.json()
     var i = 0
     while (i < resourcesJSON.length) {
         var resourceContent = config.PRIVATE_REPO ? await fetch(`${resourcesJSON[i].download_url}`, {"method": "GET", "headers": headers}) : await fetch(`${resourcesJSON[i].download_url}`)
@@ -65,12 +83,12 @@ async function updateResources() {
 }
 
 async function updateActions() {
-    const actions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`)
-    const actionsJSON = await actions.json()
-    const events = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`)
-    const eventsJSON = await events.json()
-    const extensions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`)
-    const extensionsJSON = await extensions.json()
+    var actions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`)
+    var actionsJSON = await actions.json()
+    var events = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`)
+    var eventsJSON = await events.json()
+    var extensions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`)
+    var extensionsJSON = await extensions.json()
     var i = 0
     while (i < actionsJSON.length) {
         var actionContent = config.PRIVATE_REPO ? await fetch(`${actionsJSON[i].download_url}`, {"method": "GET", "headers": headers}) : await fetch(`${actionsJSON[i].download_url}`)
@@ -136,8 +154,9 @@ async function choices(choice) {
 // start
 (async function start() {
     await configValidator()
+    await repoContentsValidator()
     if (process.argv[2] == undefined) {
-        console.log("No argument(s) provided, entering Manual Mode by default")
+        console.log("No argument provided, entering Manual Mode by default")
         let timeoutId = setTimeout(() => {
             console.log('No input received, updating commands by default...');
             choices("commands") 
