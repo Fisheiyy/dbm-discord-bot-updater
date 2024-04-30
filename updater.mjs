@@ -1,3 +1,4 @@
+// This program is created with assistance from Github Copilot AI.
 import fs from 'fs'
 import { exit } from 'process';
 import readline from 'readline'
