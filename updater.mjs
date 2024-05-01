@@ -1,8 +1,9 @@
 // This program is created with assistance from Github Copilot AI.
+// This program uses built-in NodeJS Modules such as FS, Readline, and Process.
 import fs from 'fs'
-import { exit } from 'process';
+import { exit } from 'process'
 import readline from 'readline'
-const prompt = readline.createInterface(process.stdin, process.stdout);
+const prompt = readline.createInterface(process.stdin, process.stdout)
 const config = JSON.parse(fs.readFileSync('./updaterConfig.json', 'utf-8'))
 const headers = {"Authorization": `Token ${config.GITHUB_ACCESS_TOKEN}`}
 
@@ -154,7 +155,7 @@ async function choices(choice) {
     if (process.argv[2] == undefined) {
         console.log("No argument provided, entering Manual Mode by default")
         let timeoutId = setTimeout(async () => {
-            console.log('No input received, updating commands by default...');
+            console.log('No input received, updating commands by default...')
             await choices("commands") 
         }, 10000)
         prompt.question("What do you want to update? \n  All \n  Settings \n  Actions \n  Commands \n  Resources \nYou have 10 Seconds to answer \n  ", async (choice) => {
