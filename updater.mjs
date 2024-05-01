@@ -27,7 +27,7 @@ async function configValidator() {
         var checkAuthToken = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents`, {"method": "GET", "headers": headers})
         checkAuthToken.status == 200 ? console.log("Github Access Token Valid") : (() => { throw new Error("GITHUB_ACCESS_TOKEN is not valid") })()
     }
-    var checkRepo = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}`, {"method": "GET"})
+    var checkRepo = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}`, {"method": "GET", "headers": headers})
     if (checkRepo.status != 200) {throw new Error("Repo does not exist, is private, or incorrect username/repo name defined in updaterConfig.json")}
     else {console.log("Repo Valid")}
     console.log("Config Valid")
@@ -35,12 +35,12 @@ async function configValidator() {
 
 // repo contents validator
 async function repoContentsValidator() {
-    var actions = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`, {"method": "GET"})
-    var events = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`, {"method": "GET"})
-    var extensions = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`, {"method": "GET"})
-    var resources = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`, {"method": "GET"})
-    var commands = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/commands.json`, {"method": "GET"})
-    var settings = await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/settings.json`, {"method": "GET"})
+    var actions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/actions`)
+    var events = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/events`)
+    var extensions = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/extensions`)
+    var resources = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/resources`)
+    var commands = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/commands.json`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/commands.json`)
+    var settings = config.PRIVATE_REPO ? await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/settings.json`, {"method": "GET", "headers": headers}) : await fetch(`https://api.github.com/repos/${config.GITHUB_USERNAME}/${config.GITHUB_REPO_NAME}/contents/data/settings.json`)
     var all = [actions, events, extensions, resources, commands, settings]
     for (var i = 0; i < all.length; i++) {
         if (all[i].status == 404) {throw new Error("Repo directories are not valid")}
@@ -58,7 +58,6 @@ async function updateCommands() {
     var eventsText = await events.text()
     fs.writeFileSync('.\\data\\events.json', eventsText)
     console.log("Events Updated")
-    exit()
 }
 
 async function updateSettings() {
@@ -66,7 +65,6 @@ async function updateSettings() {
     var settingsText = await settings.text()
     fs.writeFileSync('.\\data\\settings.json', settingsText)
     console.log("Settings Updated")
-    exit()
 }
 
 async function updateResources() {
@@ -77,10 +75,8 @@ async function updateResources() {
         var resourceContent = config.PRIVATE_REPO ? await fetch(`${resourcesJSON[i].download_url}`, {"method": "GET", "headers": headers}) : await fetch(`${resourcesJSON[i].download_url}`)
         var resourceText = await resourceContent.text()
         fs.writeFileSync('.\\resources\\' + resourcesJSON[i].name, resourceText)
-        console.log("Resources Downloaded: " + resourcesJSON[i].name)
         i++
     }
-    exit()
 }
 
 async function updateActions() {
@@ -118,7 +114,6 @@ async function updateActions() {
         i++
     }
     console.log("Extensions Updated")
-    exit()
 }
 
 async function choices(choice) {
@@ -158,18 +153,20 @@ async function choices(choice) {
     await repoContentsValidator()
     if (process.argv[2] == undefined) {
         console.log("No argument provided, entering Manual Mode by default")
-        let timeoutId = setTimeout(() => {
+        let timeoutId = setTimeout(async () => {
             console.log('No input received, updating commands by default...');
-            choices("commands") 
+            await choices("commands") 
         }, 10000)
-        prompt.question("What do you want to update? \n  All \n  Settings \n  Actions \n  Commands \n  Resources \nYou have 10 Seconds to answer \n  ", (choice) => {
+        prompt.question("What do you want to update? \n  All \n  Settings \n  Actions \n  Commands \n  Resources \nYou have 10 Seconds to answer \n  ", async (choice) => {
             clearTimeout(timeoutId)
             if (choice !== undefined) {
-                manual(choice)
+                await choices(choice)
+                exit()
             }
         })
     }
     else {
         await choices(process.argv[2])
+        exit()
     }
 }())
